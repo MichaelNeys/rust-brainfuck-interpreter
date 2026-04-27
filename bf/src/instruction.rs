@@ -1,4 +1,4 @@
-enum Instruction {
+pub enum Instruction {
     Right(u32), // move pointer to right
     Left(u32), // move ponter to left
     Add{count: u32, offset: u32}, // add 1 to cell at offest from pointer
@@ -10,4 +10,19 @@ enum Instruction {
     FindEmptyRight(u32), // set pointer to the first empty cell to the right
     FindEmptyLeft(u32), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
+}
+
+
+
+
+pub struct InstructionList{
+    current_instruction: usize,
+    instructions: Vec<Instruction>
+}
+
+
+impl InstructionList{
+
+
+
 }
