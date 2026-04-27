@@ -1,3 +1,5 @@
+
+#[derive(PartialEq, Debug)]
 pub enum Instruction {
     Right(u32), // move pointer to right
     Left(u32), // move ponter to left
@@ -5,8 +7,8 @@ pub enum Instruction {
     Sub{count: u32, offset: u32}, // subtract 1 from cell at offest form pointer
     Print(u32), // prints the current memory cell as ascii
     Read(u32), // reads input to the current memory cell
-    JumpLeft(u32), // Jump to the next JumpRight if current cell is 0
-    JumpRight(u32), // Jump to the next JumpLeft if current cell is not 0
+    JumpToLeft(u32), // Jump to the next JumpToRight if current cell is 0
+    JumpToRight(u32), // Jump to the next JumpToLeft if current cell is not 0
     FindEmptyRight(u32), // set pointer to the first empty cell to the right
     FindEmptyLeft(u32), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
@@ -15,6 +17,7 @@ pub enum Instruction {
 
 
 
+#[derive(Debug, PartialEq)]
 pub struct InstructionList{
     current_instruction: usize,
     instructions: Vec<Instruction>
@@ -23,6 +26,66 @@ pub struct InstructionList{
 
 impl InstructionList{
 
+    pub fn new(instructions: Vec<Instruction>) -> InstructionList{
+        InstructionList{current_instruction: 0, instructions: instructions}
+    }
 
 
+    pub fn next_instruction(&mut self) -> Option<&Instruction>{
+        let instruction = self.instructions.get(self.current_instruction);
+        self.current_instruction += 1;
+        instruction
+    }
+
+    pub fn execute_jump_to_left(&mut self) {
+        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToRight(_)){
+            if self.current_instruction == 0{
+                panic!("Could not find '[' before beginning of program!")
+            }
+            self.current_instruction -= 1;
+        }
+    }
+
+    pub fn execute_jump_to_right(&mut self){
+        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToLeft(_)){
+            if self.current_instruction >= self.instructions.len() - 1{
+                panic!("Could not find ']' before end of program!")
+            }
+            self.current_instruction += 1;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::instruction::{Instruction, InstructionList};
+
+    #[test]
+    fn test_new() {
+        assert_eq!(InstructionList::new(vec![]), InstructionList{current_instruction: 0, instructions: vec![]});
+        assert_eq!(InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }]), InstructionList{current_instruction: 0, instructions: vec![Instruction::Add { count: 5, offset: 0 }]});
+    }
+
+    #[test]
+    fn test_next_instruction(){
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }]);
+        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 5, offset: 0 }));
+        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 2, offset: 0 }));
+    }
+
+    #[test]
+    fn test_jump_to_right(){
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(1), Instruction::Print(1)]);
+        list.execute_jump_to_right();
+        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft(1)))
+    }
+
+    #[test]
+    fn test_jump_to_left(){
+        let mut list = InstructionList::new(vec![Instruction::JumpToRight(1), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print(1)]);
+        list.next_instruction();
+        list.next_instruction();
+        list.execute_jump_to_left();
+        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToRight(1)))
+    }
 }
