@@ -20,6 +20,24 @@ impl MemoryTape{
     pub fn set_pointer(&mut self, pointer: i64) {
         self.pointer = pointer
     }
+    pub fn set_at_pointer(&mut self, value: u8, offset: i32){
+        let offset_pointer = self.pointer - offset as i64;
+
+        if self.pointer >= 0{
+            // positive list
+            if offset_pointer as usize >= self.positive_data.len() {
+                self.positive_data.resize(offset_pointer as usize + 1, 0);
+            }
+            self.positive_data[offset_pointer as usize] = value;
+        }else{
+            let location: usize = (-offset_pointer as usize) - 1;
+            // negative list
+            if location >= self.positive_data.len() {
+                self.negative_data.resize(location + 1, 0);
+            }
+            self.negative_data[location] = value
+        }
+    }
 
     pub fn move_pointer_left(&mut self){
         self.pointer -= 1;
@@ -29,16 +47,19 @@ impl MemoryTape{
         self.pointer += 1;
     }
 
-    pub fn get_at_pointer(&self) -> u8{
-        if self.pointer >= 0{
+    pub fn get_at_pointer(&self, offset: i32) -> u8{
+
+        let offset_pointer = self.pointer - offset as i64;
+
+        if offset_pointer >= 0{
             // positive list
-            if self.pointer as usize >= self.positive_data.len(){
+            if offset_pointer as usize >= self.positive_data.len(){
                 0
             }else{
-                self.positive_data[self.pointer as usize]
+                self.positive_data[offset_pointer as usize]
             }
         }else{
-            let location: usize = (-self.pointer as usize) - 1;
+            let location: usize = (-offset_pointer as usize) - 1;
             // negative list
             if location >= self.negative_data.len(){
                 0
@@ -49,41 +70,11 @@ impl MemoryTape{
     }
 
     pub fn add_at_pointer(&mut self, offset: i32){
-        let offset_pointer = self.pointer - offset as i64;
-
-        if self.pointer >= 0{
-            // positive list
-            if offset_pointer as usize >= self.positive_data.len() {
-                self.positive_data.resize(offset_pointer as usize + 1, 0);
-            }
-            self.positive_data[offset_pointer as usize] = self.positive_data[offset_pointer as usize].wrapping_add(1);
-        }else{
-            let location: usize = (-offset_pointer as usize) - 1;
-            // negative list
-            if location >= self.positive_data.len() {
-                self.negative_data.resize(location + 1, 0);
-            }
-            self.negative_data[location] = self.negative_data[location].wrapping_add(1);
-        }
+        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add(1), offset);
     }
 
     pub fn subtract_at_pointer(&mut self, offset: i32){
-        let offset_pointer = self.pointer - offset as i64;
-
-        if self.pointer >= 0{
-            // positive list
-            if offset_pointer as usize >= self.positive_data.len() {
-                self.positive_data.resize(offset_pointer as usize + 1, 0);
-            }
-            self.positive_data[offset_pointer as usize] = self.positive_data[offset_pointer as usize].wrapping_sub(1);
-        }else{
-            let location: usize = (-offset_pointer as usize) - 1;
-            // negative list
-            if location >= self.positive_data.len() {
-                self.negative_data.resize(location + 1, 0);
-            }
-            self.negative_data[location] = self.negative_data[location].wrapping_sub(1);
-        }
+        self.set_at_pointer(self.get_at_pointer(offset).wrapping_sub(1), offset);
     }
 }
 
@@ -108,9 +99,9 @@ mod tests{
     #[test]
     fn test_get(){
         let mut tape = MemoryTape::new();
-        assert_eq!(tape.get_at_pointer(), 0);
+        assert_eq!(tape.get_at_pointer(0), 0);
         tape.move_pointer_right();
-        assert_eq!(tape.get_at_pointer(), 0);
+        assert_eq!(tape.get_at_pointer(0), 0);
     }
 
 
@@ -118,18 +109,18 @@ mod tests{
     fn test_add_subtract(){
         let mut tape = MemoryTape::new();
         tape.add_at_pointer(0);
-        assert_eq!(tape.get_at_pointer(), 1);
+        assert_eq!(tape.get_at_pointer(0), 1);
         tape.subtract_at_pointer(0);
         tape.subtract_at_pointer(0);
-        assert_eq!(tape.get_at_pointer(), 255);
+        assert_eq!(tape.get_at_pointer(0), 255);
     }
 
     #[test]
     fn test_new_value(){
         let mut tape = MemoryTape::new();
         tape.move_pointer_right();
-        assert_eq!(tape.get_at_pointer(), 0);
+        assert_eq!(tape.get_at_pointer(0), 0);
         tape.add_at_pointer(0);
-        assert_eq!(tape.get_at_pointer(), 1);
+        assert_eq!(tape.get_at_pointer(0), 1);
     }
 }

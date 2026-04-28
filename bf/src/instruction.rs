@@ -3,12 +3,12 @@
 pub enum Instruction {
     Right(u32), // move pointer to right
     Left(u32), // move ponter to left
-    Add{count: u32, offset: u32}, // add 1 to cell at offest from pointer
-    Sub{count: u32, offset: u32}, // subtract 1 from cell at offest form pointer
+    Add{count: u32, offset: i32}, // add 1 to cell at offest from pointer
+    Sub{count: u32, offset: i32}, // subtract 1 from cell at offest form pointer
     Print(u32), // prints the current memory cell as ascii
     Read(u32), // reads input to the current memory cell
-    JumpToLeft(u32), // Jump to the next JumpToRight if current cell is 0
-    JumpToRight(u32), // Jump to the next JumpToLeft if current cell is not 0
+    JumpToLeft(), // Jump to the next JumpToRight if current cell is 0
+    JumpToRight(), // Jump to the next JumpToLeft if current cell is not 0
     FindEmptyRight(u32), // set pointer to the first empty cell to the right
     FindEmptyLeft(u32), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
@@ -38,7 +38,7 @@ impl InstructionList{
     }
 
     pub fn execute_jump_to_left(&mut self) {
-        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToRight(_)){
+        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToRight()){
             if self.current_instruction == 0{
                 panic!("Could not find '[' before beginning of program!")
             }
@@ -47,12 +47,16 @@ impl InstructionList{
     }
 
     pub fn execute_jump_to_right(&mut self){
-        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToLeft(_)){
+        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToLeft()){
             if self.current_instruction >= self.instructions.len() - 1{
                 panic!("Could not find ']' before end of program!")
             }
             self.current_instruction += 1;
         }
+    }
+
+    pub fn is_at_end(&self) -> bool{
+        self.current_instruction >= self.instructions.len()
     }
 }
 
@@ -75,17 +79,17 @@ mod tests {
 
     #[test]
     fn test_jump_to_right(){
-        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(1), Instruction::Print(1)]);
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(), Instruction::Print(1)]);
         list.execute_jump_to_right();
-        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft(1)))
+        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
     }
 
     #[test]
     fn test_jump_to_left(){
-        let mut list = InstructionList::new(vec![Instruction::JumpToRight(1), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print(1)]);
+        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print(1)]);
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();
-        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToRight(1)))
+        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToRight()))
     }
 }
