@@ -6,7 +6,7 @@ pub mod memory_tape;
 pub mod executor;
 
 fn main() {
-    let instructions: Vec<Instruction> = vec![Instruction::Add{count: 75, offset: 0}, Instruction::Print(1)];
+    let instructions: Vec<Instruction> = vec![Instruction::Read(1), Instruction::Print(5)];
     let instruction_list: InstructionList = InstructionList::new(instructions);
 
     let mut executor: Executor = Executor::new(instruction_list);
