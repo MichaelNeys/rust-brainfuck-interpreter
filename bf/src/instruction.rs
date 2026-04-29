@@ -1,16 +1,16 @@
 
 #[derive(PartialEq, Debug)]
 pub enum Instruction {
-    Right(u32), // move pointer to right
-    Left(u32), // move ponter to left
-    Add{count: u32, offset: i32}, // add 1 to cell at offest from pointer
-    Sub{count: u32, offset: i32}, // subtract 1 from cell at offest form pointer
-    Print(u32), // prints the current memory cell as ascii
-    Read(u32), // reads input to the current memory cell
+    Right(u64), // move pointer to right
+    Left(u64), // move ponter to left
+    Add{count: u64, offset: i32}, // add 1 to cell at offest from pointer
+    Sub{count: u64, offset: i32}, // subtract 1 from cell at offest form pointer
+    Print(u64), // prints the current memory cell as ascii
+    Read(u64), // reads input to the current memory cell
     JumpToLeft(), // Jump to the next JumpToRight if current cell is 0
     JumpToRight(), // Jump to the next JumpToLeft if current cell is not 0
-    FindEmptyRight(u32), // set pointer to the first empty cell to the right
-    FindEmptyLeft(u32), // set pointer to the first empty cell to the left
+    FindEmptyRight(u64), // set pointer to the first empty cell to the right
+    FindEmptyLeft(u64), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
 }
 

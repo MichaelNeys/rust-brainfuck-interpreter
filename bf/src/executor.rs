@@ -24,10 +24,10 @@ impl Executor{
     fn execute_instruction(&mut self){
         let to_execute: &Instruction = self.instruction_list.next_instruction().unwrap();
         match to_execute {
-            Instruction::Right(count) => for _ in 0..*count { self.memory.move_pointer_right();}
-            Instruction::Left(count) => for _ in 0..*count { self.memory.move_pointer_left();}
-            Instruction::Add {count, offset} => for _ in 0..*count { self.memory.add_at_pointer(*offset); }
-            Instruction::Sub {count, offset} => for _ in 0..*count { self.memory.subtract_at_pointer(*offset); }
+            Instruction::Right(count) => self.memory.move_pointer(*count as i64),
+            Instruction::Left(count) => self.memory.move_pointer(-(*count as i64)),
+            Instruction::Add {count, offset} => self.memory.add_at_pointer(*count, *offset),
+            Instruction::Sub {count, offset} => self.memory.subtract_at_pointer(*count, *offset),
             Instruction::Print(count) => for _ in 0..*count {
                 let char = self.memory.get_at_pointer(0) as char;
                 print!("{char}");
@@ -45,12 +45,12 @@ impl Executor{
             }
             Instruction::FindEmptyRight(_) => {
                 while self.memory.get_at_pointer(0) != 0{
-                    self.memory.move_pointer_right();
+                    self.memory.move_pointer(1);
                 }
             }
             Instruction::FindEmptyLeft(_) => {
                 while self.memory.get_at_pointer(0) != 0{
-                    self.memory.move_pointer_left();
+                    self.memory.move_pointer(-1);
                 }
             }
         }

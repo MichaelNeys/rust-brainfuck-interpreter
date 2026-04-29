@@ -39,12 +39,8 @@ impl MemoryTape{
         }
     }
 
-    pub fn move_pointer_left(&mut self){
-        self.pointer -= 1;
-    }
-
-    pub fn move_pointer_right(&mut self){
-        self.pointer += 1;
+    pub fn move_pointer(&mut self, count: i64){
+        self.pointer += count;
     }
 
     pub fn get_at_pointer(&self, offset: i32) -> u8{
@@ -69,12 +65,12 @@ impl MemoryTape{
         }
     }
 
-    pub fn add_at_pointer(&mut self, offset: i32){
-        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add(1), offset);
+    pub fn add_at_pointer(&mut self, count: u64, offset: i32){
+        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add((count % 256) as u8), offset);
     }
 
-    pub fn subtract_at_pointer(&mut self, offset: i32){
-        self.set_at_pointer(self.get_at_pointer(offset).wrapping_sub(1), offset);
+    pub fn subtract_at_pointer(&mut self, count: u64, offset: i32){
+        self.set_at_pointer(self.get_at_pointer(offset).wrapping_sub((count % 256) as u8), offset);
     }
 }
 
@@ -90,17 +86,16 @@ mod tests{
     #[test]
     fn test_move_pointer(){
         let mut tape = MemoryTape::new();
-        tape.move_pointer_left();
+        tape.move_pointer(-1);
         assert_eq!(tape.pointer, -1);
-        tape.move_pointer_right();
-        tape.move_pointer_right();
+        tape.move_pointer(2);
         assert_eq!(tape.pointer, 1);
     }
     #[test]
     fn test_get(){
         let mut tape = MemoryTape::new();
         assert_eq!(tape.get_at_pointer(0), 0);
-        tape.move_pointer_right();
+        tape.move_pointer(1);
         assert_eq!(tape.get_at_pointer(0), 0);
     }
 
@@ -108,19 +103,18 @@ mod tests{
     #[test]
     fn test_add_subtract(){
         let mut tape = MemoryTape::new();
-        tape.add_at_pointer(0);
-        assert_eq!(tape.get_at_pointer(0), 1);
-        tape.subtract_at_pointer(0);
-        tape.subtract_at_pointer(0);
+        tape.add_at_pointer(5, 0);
+        assert_eq!(tape.get_at_pointer(0), 5);
+        tape.subtract_at_pointer(6,0);
         assert_eq!(tape.get_at_pointer(0), 255);
     }
 
     #[test]
     fn test_new_value(){
         let mut tape = MemoryTape::new();
-        tape.move_pointer_right();
+        tape.move_pointer(1);
         assert_eq!(tape.get_at_pointer(0), 0);
-        tape.add_at_pointer(0);
-        assert_eq!(tape.get_at_pointer(0), 1);
+        tape.add_at_pointer(2,0);
+        assert_eq!(tape.get_at_pointer(0), 2);
     }
 }
