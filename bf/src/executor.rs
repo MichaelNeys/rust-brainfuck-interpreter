@@ -1,16 +1,17 @@
 use crate::instruction::{Instruction, InstructionList};
 use crate::memory_tape::MemoryTape;
-use std::io::{Read, stdin};
+use std::io::{Read};
 
-pub struct Executor{
+pub struct Executor<R: Read>{
     instruction_list: InstructionList,
     memory: MemoryTape,
+    input: R
 }
 
 
-impl Executor{
-    pub fn new(instruction_list: InstructionList) -> Executor{
-        Executor{instruction_list, memory: MemoryTape::new()}
+impl<R: Read> Executor<R>{
+    pub fn new(instruction_list: InstructionList, input: R) -> Executor<R>{
+        Executor{instruction_list, memory: MemoryTape::new(), input}
     }
 
     pub fn run(&mut self){
@@ -33,9 +34,9 @@ impl Executor{
                 print!("{char}");
             }
             Instruction::Read(count) => for _ in 0..*count {
-                let mut stdin_handle = stdin().lock();
+
                 let mut byte = [0_u8];
-                stdin_handle.read_exact(&mut byte).unwrap();
+                self.input.read_exact(&mut byte).unwrap();
                 self.memory.set_at_pointer(byte[0], 0);
             }
             Instruction::JumpToLeft() => self.instruction_list.execute_jump_to_left(),
