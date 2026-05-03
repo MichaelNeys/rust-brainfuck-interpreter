@@ -39,8 +39,16 @@ impl<R: Read> Executor<R>{
                 self.input.read_exact(&mut byte).unwrap();
                 self.memory.set_at_pointer(byte[0], 0);
             }
-            Instruction::JumpToLeft() => self.instruction_list.execute_jump_to_left(),
-            Instruction::JumpToRight() => self.instruction_list.execute_jump_to_left(),
+            Instruction::JumpToRight() => {
+                if self.memory.get_at_pointer(0) == 0 {
+                    self.instruction_list.execute_jump_to_right();
+                }
+            }
+            Instruction::JumpToLeft() => {
+                if self.memory.get_at_pointer(0) != 0 {
+                    self.instruction_list.execute_jump_to_left();
+                }
+            }
             Instruction::Reset() => {
                 self.memory.set_at_pointer(0, 0);
             }
