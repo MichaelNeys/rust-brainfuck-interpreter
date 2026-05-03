@@ -1,12 +1,10 @@
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Instruction {
-    Right(u64), // move pointer to right
-    Left(u64), // move ponter to left
-    Add{count: u64, offset: i32}, // add 1 to cell at offest from pointer
-    Sub{count: u64, offset: i32}, // subtract 1 from cell at offest form pointer
-    Print(u64), // prints the current memory cell as ascii
-    Read(u64), // reads input to the current memory cell
+    Move(i64), // move pointer to right
+    Add{count: i64, offset: i32}, // add 1 to cell at offest from pointer
+    Print(), // prints the current memory cell as ascii
+    Read(), // reads input to the current memory cell
     JumpToLeft(), // Jump to the next JumpToRight if current cell is 0
     JumpToRight(), // Jump to the next JumpToLeft if current cell is not 0
     FindEmptyRight(u64), // set pointer to the first empty cell to the right
@@ -94,14 +92,14 @@ mod tests {
 
     #[test]
     fn test_jump_to_right(){
-        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(), Instruction::Print(1)]);
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(), Instruction::Print()]);
         list.execute_jump_to_right();
         assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
     }
 
     #[test]
     fn test_jump_to_left(){
-        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print(1)]);
+        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print()]);
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();

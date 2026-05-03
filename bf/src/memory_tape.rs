@@ -65,12 +65,8 @@ impl MemoryTape{
         }
     }
 
-    pub fn add_at_pointer(&mut self, count: u64, offset: i32){
+    pub fn add_at_pointer(&mut self, count: i64, offset: i32){
         self.set_at_pointer(self.get_at_pointer(offset).wrapping_add((count % 256) as u8), offset);
-    }
-
-    pub fn subtract_at_pointer(&mut self, count: u64, offset: i32){
-        self.set_at_pointer(self.get_at_pointer(offset).wrapping_sub((count % 256) as u8), offset);
     }
 }
 
@@ -105,7 +101,7 @@ mod tests{
         let mut tape = MemoryTape::new();
         tape.add_at_pointer(5, 0);
         assert_eq!(tape.get_at_pointer(0), 5);
-        tape.subtract_at_pointer(6,0);
+        tape.add_at_pointer(-6,0);
         assert_eq!(tape.get_at_pointer(0), 255);
     }
 

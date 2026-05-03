@@ -24,17 +24,15 @@ impl<R: Read> Executor<R>{
 
     fn execute_instruction(&mut self){
         let to_execute: &Instruction = self.instruction_list.next_instruction().unwrap();
+
         match to_execute {
-            Instruction::Right(count) => self.memory.move_pointer(*count as i64),
-            Instruction::Left(count) => self.memory.move_pointer(-(*count as i64)),
+            Instruction::Move(count) => self.memory.move_pointer(*count),
             Instruction::Add {count, offset} => self.memory.add_at_pointer(*count, *offset),
-            Instruction::Sub {count, offset} => self.memory.subtract_at_pointer(*count, *offset),
-            Instruction::Print(count) => for _ in 0..*count {
+            Instruction::Print() => {
                 let char = self.memory.get_at_pointer(0) as char;
                 print!("{char}");
             }
-            Instruction::Read(count) => for _ in 0..*count {
-
+            Instruction::Read() => {
                 let mut byte = [0_u8];
                 self.input.read_exact(&mut byte).unwrap();
                 self.memory.set_at_pointer(byte[0], 0);
