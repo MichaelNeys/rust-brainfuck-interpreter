@@ -35,13 +35,27 @@ impl Parser {
                 '[' => instructions.push(Instruction::JumpToRight()),
                 ']' => {
                     let len = instructions.len();
-                    if len >= 2 
-                        && instructions[len - 1] == (Instruction::Sub { count: 1, offset: 0 }) 
-                        && instructions[len - 2] == Instruction::JumpToRight() 
-                    {
-                        instructions.pop();
-                        instructions.pop();
-                        instructions.push(Instruction::Reset());
+                    if len >= 2 {
+                        match (&instructions[len - 2], &instructions[len - 1]) {
+                            (Instruction::JumpToRight(), Instruction::Sub { count: 1, offset: 0 }) => {
+                                instructions.pop();
+                                instructions.pop();
+                                instructions.push(Instruction::Reset());
+                            }
+                            (Instruction::JumpToRight(), Instruction::Right(1)) => {
+                                instructions.pop();
+                                instructions.pop();
+                                instructions.push(Instruction::FindEmptyRight(1));
+                            }
+                            (Instruction::JumpToRight(), Instruction::Left(1)) => {
+                                instructions.pop();
+                                instructions.pop();
+                                instructions.push(Instruction::FindEmptyLeft(1));
+                            }
+                            _ => {
+                                instructions.push(Instruction::JumpToLeft());
+                            }
+                        }
                     } else {
                         instructions.push(Instruction::JumpToLeft());
                     }
