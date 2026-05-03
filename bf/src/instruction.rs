@@ -19,8 +19,8 @@ pub enum Instruction {
 
 #[derive(Debug, PartialEq)]
 pub struct InstructionList{
-    current_instruction: usize,
-    instructions: Vec<Instruction>
+    pub current_instruction: usize,
+    pub instructions: Vec<Instruction>
 }
 
 
@@ -37,21 +37,36 @@ impl InstructionList{
         instruction
     }
 
-    pub fn execute_jump_to_left(&mut self) {
-        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToRight()){
-            if self.current_instruction == 0{
-                panic!("Could not find '[' before beginning of program!")
+    pub fn execute_jump_to_right(&mut self) {
+        let mut depth = 1;
+        while depth > 0 {
+            if self.current_instruction >= self.instructions.len() {
+                panic!("Unbalanced brackets: could not find ']'");
             }
-            self.current_instruction -= 1;
+            match self.instructions[self.current_instruction] {
+                Instruction::JumpToRight() => depth += 1,
+                Instruction::JumpToLeft() => depth -= 1,
+                _ => {}
+            }
+            if depth > 0 { self.current_instruction += 1; }
         }
     }
 
-    pub fn execute_jump_to_right(&mut self){
-        while !matches!(self.instructions[self.current_instruction], Instruction::JumpToLeft()){
-            if self.current_instruction >= self.instructions.len() - 1{
-                panic!("Could not find ']' before end of program!")
+    pub fn execute_jump_to_left(&mut self) {
+        self.current_instruction -= 2; 
+        let mut depth = 1;
+        while depth > 0 {
+            match self.instructions[self.current_instruction] {
+                Instruction::JumpToLeft() => depth += 1,
+                Instruction::JumpToRight() => depth -= 1,
+                _ => {}
             }
-            self.current_instruction += 1;
+            if depth > 0 {
+                if self.current_instruction == 0 {
+                    panic!("Unbalanced brackets: could not find '['");
+                }
+                self.current_instruction -= 1;
+            }
         }
     }
 

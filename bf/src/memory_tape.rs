@@ -22,8 +22,8 @@ impl MemoryTape{
     }
     pub fn set_at_pointer(&mut self, value: u8, offset: i32){
         let offset_pointer = self.pointer - offset as i64;
-
-        if self.pointer >= 0{
+        
+        if offset_pointer >= 0{
             // positive list
             if offset_pointer as usize >= self.positive_data.len() {
                 self.positive_data.resize(offset_pointer as usize + 1, 0);
@@ -32,7 +32,7 @@ impl MemoryTape{
         }else{
             let location: usize = (-offset_pointer as usize) - 1;
             // negative list
-            if location >= self.positive_data.len() {
+            if location >= self.negative_data.len() {
                 self.negative_data.resize(location + 1, 0);
             }
             self.negative_data[location] = value
