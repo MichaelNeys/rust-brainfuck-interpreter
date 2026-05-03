@@ -14,7 +14,7 @@ impl<R: Read> Executor<R>{
         Executor{instruction_list, memory: MemoryTape::new(), input}
     }
 
-    pub fn run(&mut self){
+    pub fn run(mut self){
         while !self.instruction_list.is_at_end() {
             self.execute_instruction();
         }

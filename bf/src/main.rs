@@ -11,7 +11,7 @@ fn main() {
     let instruction_list: InstructionList = InstructionList::new(instructions);
 
     let stdin_handle = stdin().lock();
-    let mut executor: Executor<StdinLock> = Executor::new(instruction_list, stdin_handle);
+    let executor: Executor<StdinLock> = Executor::new(instruction_list, stdin_handle);
 
     executor.run();
 }
