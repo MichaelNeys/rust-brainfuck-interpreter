@@ -33,7 +33,19 @@ impl Parser {
                 '.' => instructions.push(Instruction::Print(1)),
                 ',' => instructions.push(Instruction::Read(1)),
                 '[' => instructions.push(Instruction::JumpToRight()),
-                ']' => instructions.push(Instruction::JumpToLeft()),
+                ']' => {
+                    let len = instructions.len();
+                    if len >= 2 
+                        && instructions[len - 1] == (Instruction::Sub { count: 1, offset: 0 }) 
+                        && instructions[len - 2] == Instruction::JumpToRight() 
+                    {
+                        instructions.pop();
+                        instructions.pop();
+                        instructions.push(Instruction::Reset());
+                    } else {
+                        instructions.push(Instruction::JumpToLeft());
+                    }
+                },
                 _ => {}
             }
             i += 1;
