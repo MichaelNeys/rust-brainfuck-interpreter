@@ -2,7 +2,7 @@
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Instruction {
     Move(i64), // move pointer to right
-    Add{count: i64, offset: i32}, // add 1 to cell at offest from pointer
+    Add{count: i64}, // add count to cell at offest from pointer
     Print(), // prints the current memory cell as ascii
     Read(), // reads input to the current memory cell
     JumpToLeft(), // Jump to the next JumpToRight if current cell is 0
@@ -10,6 +10,7 @@ pub enum Instruction {
     FindEmptyRight(u64), // set pointer to the first empty cell to the right
     FindEmptyLeft(u64), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
+    Copy{offset: i32, multiplier: i64}, // copy the current cell value into offset
 }
 
 
@@ -80,26 +81,26 @@ mod tests {
     #[test]
     fn test_new() {
         assert_eq!(InstructionList::new(vec![]), InstructionList{current_instruction: 0, instructions: vec![]});
-        assert_eq!(InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }]), InstructionList{current_instruction: 0, instructions: vec![Instruction::Add { count: 5, offset: 0 }]});
+        assert_eq!(InstructionList::new(vec![Instruction::Add { count: 5}]), InstructionList{current_instruction: 0, instructions: vec![Instruction::Add { count: 5 }]});
     }
 
     #[test]
     fn test_next_instruction(){
-        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }]);
-        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 5, offset: 0 }));
-        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 2, offset: 0 }));
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5 }, Instruction::Add { count: 2}]);
+        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 5}));
+        assert_eq!(list.next_instruction(), Some(&Instruction::Add { count: 2}));
     }
 
     #[test]
     fn test_jump_to_right(){
-        let mut list = InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::JumpToLeft(), Instruction::Print()]);
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5 }, Instruction::Add { count: 2 }, Instruction::JumpToLeft(), Instruction::Print()]);
         list.execute_jump_to_right();
         assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
     }
 
     #[test]
     fn test_jump_to_left(){
-        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5, offset: 0 }, Instruction::Add { count: 2, offset: 0 }, Instruction::Print()]);
+        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5 }, Instruction::Add { count: 2}, Instruction::Print()]);
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();

@@ -25,9 +25,10 @@ impl<R: Read> Executor<R>{
     fn execute_instruction(&mut self){
         let to_execute: &Instruction = self.instruction_list.next_instruction().unwrap();
 
+        //println!("Instruction: {:?}, Memory: {}, Pointer: {}", to_execute, self.memory.get_at_pointer(0), self.memory.pointer);
         match to_execute {
             Instruction::Move(count) => self.memory.move_pointer(*count),
-            Instruction::Add {count, offset} => self.memory.add_at_pointer(*count, *offset),
+            Instruction::Add {count} => self.memory.add_at_pointer(*count, 0),
             Instruction::Print() => {
                 let char = self.memory.get_at_pointer(0) as char;
                 print!("{char}");
@@ -59,6 +60,9 @@ impl<R: Read> Executor<R>{
                 while self.memory.get_at_pointer(0) != 0{
                     self.memory.move_pointer(-1);
                 }
+            }
+            Instruction::Copy {offset, multiplier} => {
+                self.memory.add_at_pointer(multiplier * self.memory.get_at_pointer(0) as i64, *offset);
             }
         }
     }

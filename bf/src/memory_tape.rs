@@ -5,7 +5,7 @@ pub struct MemoryTape{
     positive_data: Vec<u8>,
     negative_data: Vec<u8>,
 
-    pointer: i64
+    pub pointer: i64
 }
 
 
@@ -21,7 +21,7 @@ impl MemoryTape{
         self.pointer = pointer
     }
     pub fn set_at_pointer(&mut self, value: u8, offset: i32){
-        let offset_pointer = self.pointer - offset as i64;
+        let offset_pointer = self.pointer + offset as i64;
         
         if offset_pointer >= 0{
             // positive list
@@ -45,7 +45,7 @@ impl MemoryTape{
 
     pub fn get_at_pointer(&self, offset: i32) -> u8{
 
-        let offset_pointer = self.pointer - offset as i64;
+        let offset_pointer = self.pointer + offset as i64;
 
         if offset_pointer >= 0{
             // positive list
@@ -66,7 +66,7 @@ impl MemoryTape{
     }
 
     pub fn add_at_pointer(&mut self, count: i64, offset: i32){
-        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add((count % 256) as u8), offset);
+        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add(count as u8), offset);
     }
 }
 

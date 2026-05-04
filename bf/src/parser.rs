@@ -10,8 +10,8 @@ impl Parser {
 
         for char in chars {
             match char{
-                '+' => instructions.push(Instruction::Add {count: 1, offset: 0}),
-                '-' => instructions.push(Instruction::Add {count: -1, offset: 0}),
+                '+' => instructions.push(Instruction::Add {count: 1}),
+                '-' => instructions.push(Instruction::Add {count: -1}),
                 '>' => instructions.push(Instruction::Move(1)),
                 '<' => instructions.push(Instruction::Move(-1)),
                 '.' => instructions.push(Instruction::Print()),
@@ -27,17 +27,11 @@ impl Parser {
     fn collapse_add(instructions: &[Instruction]) -> Vec<Instruction>{
         instructions.iter().fold(vec![], |mut acc, new| {
             match acc.last_mut() {
-                Some(Instruction::Add { count: last_count, offset: last_offset}) => {
+                Some(Instruction::Add { count: last_count}) => {
                     match new {
-                        Instruction::Add {count, offset} => {
-                            if offset == last_offset {
-                                // merge
-                                *last_count = *last_count + count;
-                            }else{
-                                // offsets don't match don't merge
-                                acc.push(*new);
-                            }
-
+                        Instruction::Add {count} => {
+                            // merge
+                            *last_count = *last_count + count;
                         }
                         _ => acc.push(*new),
                     }
@@ -74,7 +68,7 @@ impl Parser {
                     let len = acc.len();
                     if len >= 2{
                         match (acc[len-2], acc[len-1]) {
-                            (Instruction::JumpToRight(), Instruction::Add { count: -1, offset: 0 }) => {
+                            (Instruction::JumpToRight(), Instruction::Add { count: -1 }) => {
                                 acc.pop();
                                 acc.pop();
                                 acc.push(Instruction::Reset());
@@ -105,11 +99,79 @@ impl Parser {
         })
     }
 
+    fn de_loop_copy(instructions: &[Instruction]) -> Vec<Instruction>{
+        let mut in_loop = false;
+        let mut loop_start: usize = 0;
+        let mut move_count = 0;
+        let mut source_dec = 0;
+        let mut copy_offsets: Vec<(i32, i64)> = vec![];
+        let mut invalidated = false;
+        let mut pushed = false;
+
+
+        let mut result: Vec<Instruction> = vec![];
+
+        let mut i = 0;
+
+        while i < instructions.len(){
+            match instructions[i] {
+                Instruction::JumpToRight() => {
+                    in_loop = true;
+                    loop_start = result.len(); // starting instruction has not been added yet
+                    move_count = 0;
+                    invalidated = false;
+                    copy_offsets = vec![];
+                    source_dec = 0;
+                }
+                Instruction::Move(count) => {
+                    move_count += count;
+                }
+                Instruction::Add {count} => {
+                    if move_count == 0 {
+                        source_dec += count;
+                    }else{
+                        copy_offsets.push((move_count as i32, count));
+                    }
+
+                }
+                Instruction::JumpToLeft() => {
+                    if in_loop && move_count == 0 && copy_offsets.len() > 0 && !invalidated && source_dec == -1 {
+                        pushed = true;
+
+                        result.drain(loop_start..result.len());
+                        for (offset, count) in &copy_offsets{
+                            result.push(Instruction::Copy {offset: *offset, multiplier: *count});
+                        }
+                        result.push(Instruction::Reset());
+                    }
+
+                    in_loop = false;
+                    move_count = 0;
+                    invalidated = false;
+                    copy_offsets = vec![];
+                    source_dec = 0;
+                }
+                _ => {
+                    invalidated = true;
+                }
+            }
+            if !pushed {
+                result.push(instructions[i]);
+            }else{
+                pushed = false;
+            }
+            i+=1;
+        }
+
+        result
+    }
+
     pub fn parse(code: &str) -> InstructionList {
         let mut instructions = Self::naive_parse(code);
         instructions = Self::collapse_add(&instructions);
         instructions = Self::collapse_move(&instructions);
         instructions = Self::de_loop(&instructions);
+        instructions = Self::de_loop_copy(&instructions);
         /*while i < chars.len() {
             match chars[i] {
                 '+' | '-' => {
