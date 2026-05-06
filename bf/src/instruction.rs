@@ -11,6 +11,7 @@ pub enum Instruction {
     FindEmptyLeft(), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
     Copy{offset: i32, multiplier: i64}, // copy the current cell value into offset
+    CopyChunk{offset: i32, length: u32, multiplier: i64}
 }
 
 
@@ -93,14 +94,14 @@ mod tests {
 
     #[test]
     fn test_jump_to_right(){
-        let mut list = InstructionList::new(vec![Instruction::Add { count: 5 }, Instruction::Add { count: 2 }, Instruction::JumpToLeft(), Instruction::Print()]);
+        let mut list = InstructionList::new(vec![Instruction::Add { count: 5 }, Instruction::Add { count: 2 }, Instruction::JumpToLeft(), Instruction::Print(1)]);
         list.execute_jump_to_right();
         assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
     }
 
     #[test]
     fn test_jump_to_left(){
-        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5 }, Instruction::Add { count: 2}, Instruction::Print()]);
+        let mut list = InstructionList::new(vec![Instruction::JumpToRight(), Instruction::Add { count: 5 }, Instruction::Add { count: 2}, Instruction::Print(1)]);
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();

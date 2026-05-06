@@ -66,6 +66,9 @@ impl<R: Read> Executor<R>{
             Instruction::Copy {offset, multiplier} => {
                 self.memory.add_at_pointer(multiplier * self.memory.get_at_pointer(0) as i64, *offset);
             }
+            Instruction::CopyChunk {offset, length, multiplier} => {
+                self.memory.copy_chunk(*offset, *length, *multiplier);
+            }
         }
     }
 

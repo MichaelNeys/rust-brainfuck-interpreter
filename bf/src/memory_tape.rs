@@ -68,6 +68,15 @@ impl MemoryTape{
     pub fn add_at_pointer(&mut self, count: i64, offset: i32){
         self.set_at_pointer(self.get_at_pointer(offset).wrapping_add(count as u8), offset);
     }
+
+    pub fn copy_chunk(&mut self, offset: i32, length: u32, multiplier: i64){
+        // Possible optimisation: mut the list itself
+        for location in 0..length{
+            let to_add = self.get_at_pointer(location as i32);
+            self.add_at_pointer(to_add as i64 * multiplier, offset + location as i32);
+            self.set_at_pointer(0, location as i32);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -112,5 +121,15 @@ mod tests{
         assert_eq!(tape.get_at_pointer(0), 0);
         tape.add_at_pointer(2,0);
         assert_eq!(tape.get_at_pointer(0), 2);
+    }
+    #[test]
+    fn test_copy_chunk(){
+        let mut tape = MemoryTape::new();
+        tape.set_at_pointer(1,0);
+        tape.set_at_pointer(2,1);
+        tape.set_at_pointer(3, 2);
+        tape.copy_chunk(3, 3, 1);
+        assert_eq!(tape.get_at_pointer(1), 1);
+        assert_eq!(tape.get_at_pointer(2), 2);
     }
 }

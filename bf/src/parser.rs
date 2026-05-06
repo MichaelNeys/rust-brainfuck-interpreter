@@ -1,4 +1,5 @@
 use crate::instruction::{Instruction, InstructionList};
+use crate::instruction::Instruction::CopyChunk;
 
 pub struct Parser;
 
@@ -77,6 +78,51 @@ impl Parser {
 
             acc
         })
+    }
+
+    fn collapse_chunk_copy(instructions: &[Instruction]) -> Vec<Instruction> {
+        let mut i = 0;
+        let mut result: Vec<Instruction> = vec![];
+
+        while i < instructions.len() {
+            if let Instruction::Copy { offset, multiplier } = instructions[i] {
+                let mut temp_i = i;
+                let mut length = 0;
+                let mut matched = false;
+
+                while temp_i + 1 < instructions.len() {
+                    if temp_i + 2 < instructions.len()
+                        && instructions[temp_i] == (Instruction::Copy { offset, multiplier })
+                        && instructions[temp_i + 1] == Instruction::Reset()
+                        && instructions[temp_i + 2] == Instruction::Move(1)
+                    {
+                        length += 1;
+                        temp_i += 3;
+                    } else if instructions[temp_i] == (Instruction::Copy { offset, multiplier })
+                        && instructions[temp_i + 1] == Instruction::Reset()
+                    {
+                        length += 1;
+                        temp_i += 2;
+                        matched = true;
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+
+                if matched {
+                    result.push(Instruction::CopyChunk { offset, length, multiplier });
+                    // CopyChunk does not include moving the pointer so we add it (this will often be optimized away in the next pass)
+                    result.push(Instruction::Move(length as i64 - 1));
+                    i = temp_i;
+                    continue;
+                }
+            }
+
+            result.push(instructions[i]);
+            i += 1;
+        }
+        result
     }
 
     fn de_loop(instructions: &[Instruction]) -> Vec<Instruction>{
@@ -204,13 +250,14 @@ impl Parser {
         let mut old_len = instructions.len() + 1;
 
         while old_len > instructions.len() {
+            old_len = instructions.len();
             instructions = Self::collapse_add(&instructions);
             instructions = Self::collapse_move(&instructions);
             instructions = Self::collapse_print(&instructions);
             instructions = Self::de_loop(&instructions);
             instructions = Self::de_loop_copy(&instructions);
             instructions = Self::remove_redundant(&instructions);
-            old_len = instructions.len();
+            instructions = Self::collapse_chunk_copy(&instructions);
         }
 
 
