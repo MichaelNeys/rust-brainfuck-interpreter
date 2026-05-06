@@ -79,6 +79,28 @@ impl Parser {
         })
     }
 
+
+    fn collapse_find_empty(instructions: &[Instruction]) -> Vec<Instruction> {
+        instructions.iter().fold(vec![], |mut acc, new| {
+            match new {
+                Instruction::FindEmptyLeft() => {
+                    match acc.last_mut() {
+                        Some(Instruction::FindEmptyLeft()) => {}
+                        _ => acc.push(*new),
+                    }
+                }
+                Instruction::FindEmptyRight() => {
+                    match acc.last_mut() {
+                        Some(Instruction::FindEmptyRight()) => {}
+                        _ => acc.push(*new),
+                    }
+                }
+                _ => acc.push(*new)
+            }
+            acc
+        })
+    }
+
     fn de_loop(instructions: &[Instruction]) -> Vec<Instruction>{
         instructions.iter().fold(vec![], |mut acc, new| {
             match new{
@@ -207,6 +229,7 @@ impl Parser {
             instructions = Self::collapse_add(&instructions);
             instructions = Self::collapse_move(&instructions);
             instructions = Self::collapse_print(&instructions);
+            instructions = Self::collapse_find_empty(&instructions);
             instructions = Self::de_loop(&instructions);
             instructions = Self::de_loop_copy(&instructions);
             instructions = Self::remove_redundant(&instructions);
