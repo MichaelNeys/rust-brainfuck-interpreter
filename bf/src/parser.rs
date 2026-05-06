@@ -166,6 +166,20 @@ impl Parser {
         result
     }
 
+    fn remove_redundant(instructions: &[Instruction]) -> Vec<Instruction> {
+        instructions.iter().fold(vec![], |mut acc, new| {
+            match new {
+                Instruction::Add { count } if *count == 0 => acc,
+                Instruction::Move(count) if *count == 0 => acc,
+                Instruction::Copy { offset:_, multiplier } if *multiplier == 0 => acc,
+                _ => {
+                    acc.push(*new);
+                    acc
+                }
+            }
+        })
+    }
+
     pub fn parse(code: &str) -> InstructionList {
         let mut instructions = Self::naive_parse(code);
 
@@ -176,8 +190,10 @@ impl Parser {
             instructions = Self::collapse_move(&instructions);
             instructions = Self::de_loop(&instructions);
             instructions = Self::de_loop_copy(&instructions);
+            instructions = Self::remove_redundant(&instructions);
             old_len = instructions.len();
         }
+
 
         
         InstructionList::new(instructions)
