@@ -29,9 +29,11 @@ impl<R: Read> Executor<R>{
         match to_execute {
             Instruction::Move(count) => self.memory.move_pointer(*count),
             Instruction::Add {count} => self.memory.add_at_pointer(*count, 0),
-            Instruction::Print() => {
-                let char = self.memory.get_at_pointer(0) as char;
-                print!("{char}");
+            Instruction::Print(count) => {
+                for _ in 0..*count{
+                    let char = self.memory.get_at_pointer(0) as char;
+                    print!("{char}");
+                }
             }
             Instruction::Read() => {
                 let mut byte = [0_u8];
@@ -51,12 +53,12 @@ impl<R: Read> Executor<R>{
             Instruction::Reset() => {
                 self.memory.set_at_pointer(0, 0);
             }
-            Instruction::FindEmptyRight(_) => {
+            Instruction::FindEmptyRight() => {
                 while self.memory.get_at_pointer(0) != 0{
                     self.memory.move_pointer(1);
                 }
             }
-            Instruction::FindEmptyLeft(_) => {
+            Instruction::FindEmptyLeft() => {
                 while self.memory.get_at_pointer(0) != 0{
                     self.memory.move_pointer(-1);
                 }

@@ -3,12 +3,12 @@
 pub enum Instruction {
     Move(i64), // move pointer to right
     Add{count: i64}, // add count to cell at offest from pointer
-    Print(), // prints the current memory cell as ascii
+    Print(u64), // prints the current memory cell as ascii
     Read(), // reads input to the current memory cell
     JumpToLeft(), // Jump to the next JumpToRight if current cell is 0
     JumpToRight(), // Jump to the next JumpToLeft if current cell is not 0
-    FindEmptyRight(u64), // set pointer to the first empty cell to the right
-    FindEmptyLeft(u64), // set pointer to the first empty cell to the left
+    FindEmptyRight(), // set pointer to the first empty cell to the right
+    FindEmptyLeft(), // set pointer to the first empty cell to the left
     Reset(), // reset current cell
     Copy{offset: i32, multiplier: i64}, // copy the current cell value into offset
 }

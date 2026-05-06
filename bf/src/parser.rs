@@ -14,7 +14,7 @@ impl Parser {
                 '-' => instructions.push(Instruction::Add {count: -1}),
                 '>' => instructions.push(Instruction::Move(1)),
                 '<' => instructions.push(Instruction::Move(-1)),
-                '.' => instructions.push(Instruction::Print()),
+                '.' => instructions.push(Instruction::Print(1)),
                 ',' => instructions.push(Instruction::Read()),
                 '[' => instructions.push(Instruction::JumpToRight()),
                 ']' => instructions.push(Instruction::JumpToLeft()),
@@ -61,6 +61,24 @@ impl Parser {
         })
     }
 
+    fn collapse_print(instructions: &[Instruction]) -> Vec<Instruction>{
+        instructions.iter().fold(vec![], |mut acc, new| {
+            match acc.last_mut() {
+                Some(Instruction::Print(last_count)) => {
+                    match new {
+                        Instruction::Print (count) => {
+                            *last_count = *last_count + count;
+                        }
+                        _ => acc.push(*new),
+                    }
+                }
+                _ => {acc.push(*new)}
+            }
+
+            acc
+        })
+    }
+
     fn de_loop(instructions: &[Instruction]) -> Vec<Instruction>{
         instructions.iter().fold(vec![], |mut acc, new| {
             match new{
@@ -76,12 +94,12 @@ impl Parser {
                             (Instruction::JumpToRight(), Instruction::Move(1)) => {
                                 acc.pop();
                                 acc.pop();
-                                acc.push(Instruction::FindEmptyRight(1));
+                                acc.push(Instruction::FindEmptyRight());
                             }
                             (Instruction::JumpToRight(), Instruction::Move(-1)) => {
                                 acc.pop();
                                 acc.pop();
-                                acc.push(Instruction::FindEmptyLeft(1));
+                                acc.push(Instruction::FindEmptyLeft());
                             }
                             _ => {
                                 acc.push(*new)
@@ -188,6 +206,7 @@ impl Parser {
         while old_len > instructions.len() {
             instructions = Self::collapse_add(&instructions);
             instructions = Self::collapse_move(&instructions);
+            instructions = Self::collapse_print(&instructions);
             instructions = Self::de_loop(&instructions);
             instructions = Self::de_loop_copy(&instructions);
             instructions = Self::remove_redundant(&instructions);
