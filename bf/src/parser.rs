@@ -168,66 +168,17 @@ impl Parser {
 
     pub fn parse(code: &str) -> InstructionList {
         let mut instructions = Self::naive_parse(code);
-        instructions = Self::collapse_add(&instructions);
-        instructions = Self::collapse_move(&instructions);
-        instructions = Self::de_loop(&instructions);
-        instructions = Self::de_loop_copy(&instructions);
-        /*while i < chars.len() {
-            match chars[i] {
-                '+' | '-' => {
-                    let mut count: i64 = 0;
-                    while i < chars.len() && (chars[i] == '+' || chars[i] == '-') {
-                        count += if chars[i] == '+' { 1 } else { -1 };
-                        i += 1;
-                    }
-                    if count > 0 { instructions.push(Instruction::Add { count: count as u64, offset: 0 }); }
-                    else if count < 0 { instructions.push(Instruction::Sub { count: count.abs() as u64, offset: 0 }); }
-                    continue;
-                }
-                '>' | '<' => {
-                    let mut shift: i64 = 0;
-                    while i < chars.len() && (chars[i] == '>' || chars[i] == '<') {
-                        shift += if chars[i] == '>' { 1 } else { -1 };
-                        i += 1;
-                    }
-                    if shift > 0 { instructions.push(Instruction::Right(shift as u64)); }
-                    else if shift < 0 { instructions.push(Instruction::Left(shift.abs() as u64)); }
-                    continue;
-                }
-                '.' => instructions.push(Instruction::Print(1)),
-                ',' => instructions.push(Instruction::Read(1)),
-                '[' => instructions.push(Instruction::JumpToRight()),
-                ']' => {
-                    let len = instructions.len();
-                    if len >= 2 {
-                        match (&instructions[len - 2], &instructions[len - 1]) {
-                            (Instruction::JumpToRight(), Instruction::Sub { count: 1, offset: 0 }) => {
-                                instructions.pop();
-                                instructions.pop();
-                                instructions.push(Instruction::Reset());
-                            }
-                            (Instruction::JumpToRight(), Instruction::Right(1)) => {
-                                instructions.pop();
-                                instructions.pop();
-                                instructions.push(Instruction::FindEmptyRight(1));
-                            }
-                            (Instruction::JumpToRight(), Instruction::Left(1)) => {
-                                instructions.pop();
-                                instructions.pop();
-                                instructions.push(Instruction::FindEmptyLeft(1));
-                            }
-                            _ => {
-                                instructions.push(Instruction::JumpToLeft());
-                            }
-                        }
-                    } else {
-                        instructions.push(Instruction::JumpToLeft());
-                    }
-                },
-                _ => {}
-            }
-            i += 1;
-        }*/
+
+        let mut old_len = instructions.len() + 1;
+
+        while old_len > instructions.len() {
+            instructions = Self::collapse_add(&instructions);
+            instructions = Self::collapse_move(&instructions);
+            instructions = Self::de_loop(&instructions);
+            instructions = Self::de_loop_copy(&instructions);
+            old_len = instructions.len();
+        }
+
         
         InstructionList::new(instructions)
     }

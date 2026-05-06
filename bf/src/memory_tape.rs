@@ -5,7 +5,7 @@ pub struct MemoryTape{
     positive_data: Vec<u8>,
     negative_data: Vec<u8>,
 
-    pub pointer: i64
+    pointer: i64
 }
 
 
