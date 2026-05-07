@@ -1,35 +1,33 @@
-
-
 #[derive(PartialEq, Debug)]
-pub struct MemoryTape{
+pub struct MemoryTape {
     positive_data: Vec<u8>,
     negative_data: Vec<u8>,
 
-    pointer: i64
+    pointer: i64,
 }
 
-
-
-
-impl MemoryTape{
-    pub fn new() -> MemoryTape{
-        MemoryTape{ positive_data: vec![], negative_data: vec![], pointer: 0}
+impl MemoryTape {
+    pub fn new() -> MemoryTape {
+        MemoryTape {
+            positive_data: vec![],
+            negative_data: vec![],
+            pointer: 0,
+        }
     }
-
 
     pub fn set_pointer(&mut self, pointer: i64) {
         self.pointer = pointer
     }
-    pub fn set_at_pointer(&mut self, value: u8, offset: i32){
+    pub fn set_at_pointer(&mut self, value: u8, offset: i32) {
         let offset_pointer = self.pointer + offset as i64;
-        
-        if offset_pointer >= 0{
+
+        if offset_pointer >= 0 {
             // positive list
             if offset_pointer as usize >= self.positive_data.len() {
                 self.positive_data.resize(offset_pointer as usize + 1, 0);
             }
             self.positive_data[offset_pointer as usize] = value;
-        }else{
+        } else {
             let location: usize = (-offset_pointer as usize) - 1;
             // negative list
             if location >= self.negative_data.len() {
@@ -39,39 +37,41 @@ impl MemoryTape{
         }
     }
 
-    pub fn move_pointer(&mut self, count: i64){
+    pub fn move_pointer(&mut self, count: i64) {
         self.pointer += count;
     }
 
-    pub fn get_at_pointer(&self, offset: i32) -> u8{
-
+    pub fn get_at_pointer(&self, offset: i32) -> u8 {
         let offset_pointer = self.pointer + offset as i64;
 
-        if offset_pointer >= 0{
+        if offset_pointer >= 0 {
             // positive list
-            if offset_pointer as usize >= self.positive_data.len(){
+            if offset_pointer as usize >= self.positive_data.len() {
                 0
-            }else{
+            } else {
                 self.positive_data[offset_pointer as usize]
             }
-        }else{
+        } else {
             let location: usize = (-offset_pointer as usize) - 1;
             // negative list
-            if location >= self.negative_data.len(){
+            if location >= self.negative_data.len() {
                 0
-            }else{
+            } else {
                 self.negative_data[location]
             }
         }
     }
 
-    pub fn add_at_pointer(&mut self, count: i64, offset: i32){
-        self.set_at_pointer(self.get_at_pointer(offset).wrapping_add(count as u8), offset);
+    pub fn add_at_pointer(&mut self, count: i64, offset: i32) {
+        self.set_at_pointer(
+            self.get_at_pointer(offset).wrapping_add(count as u8),
+            offset,
+        );
     }
 
-    pub fn copy_chunk(&mut self, offset: i32, length: u32, multiplier: i64){
+    pub fn copy_chunk(&mut self, offset: i32, length: u32, multiplier: i64) {
         // Possible optimisation: mut the list itself
-        for location in 0..length{
+        for location in 0..length {
             let to_add = self.get_at_pointer(location as i32);
             self.add_at_pointer(to_add as i64 * multiplier, offset + location as i32);
             self.set_at_pointer(0, location as i32);
@@ -80,16 +80,23 @@ impl MemoryTape{
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use crate::memory_tape::MemoryTape;
 
     #[test]
-    fn test_new(){
-        assert_eq!(MemoryTape::new(), MemoryTape{positive_data: vec![], negative_data: vec![], pointer: 0});
+    fn test_new() {
+        assert_eq!(
+            MemoryTape::new(),
+            MemoryTape {
+                positive_data: vec![],
+                negative_data: vec![],
+                pointer: 0
+            }
+        );
     }
 
     #[test]
-    fn test_move_pointer(){
+    fn test_move_pointer() {
         let mut tape = MemoryTape::new();
         tape.move_pointer(-1);
         assert_eq!(tape.pointer, -1);
@@ -97,36 +104,35 @@ mod tests{
         assert_eq!(tape.pointer, 1);
     }
     #[test]
-    fn test_get(){
+    fn test_get() {
         let mut tape = MemoryTape::new();
         assert_eq!(tape.get_at_pointer(0), 0);
         tape.move_pointer(1);
         assert_eq!(tape.get_at_pointer(0), 0);
     }
 
-
     #[test]
-    fn test_add_subtract(){
+    fn test_add_subtract() {
         let mut tape = MemoryTape::new();
         tape.add_at_pointer(5, 0);
         assert_eq!(tape.get_at_pointer(0), 5);
-        tape.add_at_pointer(-6,0);
+        tape.add_at_pointer(-6, 0);
         assert_eq!(tape.get_at_pointer(0), 255);
     }
 
     #[test]
-    fn test_new_value(){
+    fn test_new_value() {
         let mut tape = MemoryTape::new();
         tape.move_pointer(1);
         assert_eq!(tape.get_at_pointer(0), 0);
-        tape.add_at_pointer(2,0);
+        tape.add_at_pointer(2, 0);
         assert_eq!(tape.get_at_pointer(0), 2);
     }
     #[test]
-    fn test_copy_chunk(){
+    fn test_copy_chunk() {
         let mut tape = MemoryTape::new();
-        tape.set_at_pointer(1,0);
-        tape.set_at_pointer(2,1);
+        tape.set_at_pointer(1, 0);
+        tape.set_at_pointer(2, 1);
         tape.set_at_pointer(3, 2);
         tape.copy_chunk(3, 3, 1);
         assert_eq!(tape.get_at_pointer(1), 1);

@@ -1,12 +1,12 @@
-use clap::Parser as ClapParser;
-use std::fs;
-use std::io::{stdin};
 use crate::executor::Executor;
 use crate::parser::Parser;
+use clap::Parser as ClapParser;
+use std::fs;
+use std::io::stdin;
 
+pub mod executor;
 pub mod instruction;
 pub mod memory_tape;
-pub mod executor;
 pub mod parser;
 
 #[derive(ClapParser, Debug)]
