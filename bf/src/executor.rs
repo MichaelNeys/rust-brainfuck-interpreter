@@ -1,6 +1,7 @@
 use crate::instruction::{Instruction, InstructionList};
 use crate::memory_tape::MemoryTape;
-use std::io::Read;
+use std::io::{self, Write, Read, ErrorKind};
+use anyhow::Context;
 
 pub struct Executor<R: Read> {
     instruction_list: InstructionList,
@@ -22,7 +23,7 @@ impl<R: Read> Executor<R> {
             self.execute_instruction();
         }
         // flush last section
-        println!();
+        io::stdout().flush().unwrap();
     }
 
     fn execute_instruction(&mut self) {
@@ -31,7 +32,7 @@ impl<R: Read> Executor<R> {
         //println!("Instruction: {:?}, Memory: {}, Pointer: {}", to_execute, self.memory.get_at_pointer(0), self.memory.pointer);
         match to_execute {
             Instruction::Move(count) => self.memory.move_pointer(*count),
-            Instruction::Add { count } => self.memory.add_at_pointer(*count, 0),
+            Instruction::Add { count , offset} => self.memory.add_at_pointer(*count, *offset),
             Instruction::Print(count) => {
                 for _ in 0..*count {
                     let char = self.memory.get_at_pointer(0) as char;
@@ -40,8 +41,18 @@ impl<R: Read> Executor<R> {
             }
             Instruction::Read() => {
                 let mut byte = [0_u8];
-                self.input.read_exact(&mut byte).unwrap();
-                self.memory.set_at_pointer(byte[0], 0);
+                match self.input.read_exact(&mut byte) {
+                    Ok(_)=>{
+                        self.memory.set_at_pointer(byte[0], 0);
+                    }
+                    Err(e) if e.kind() == ErrorKind::UnexpectedEof => {
+                        // EOF
+                        self.memory.set_at_pointer(0, 0);
+                    }
+                    _ => {
+                        panic!("Could not read form file!");
+                    }
+                }
             }
             Instruction::JumpToRight() => {
                 if self.memory.get_at_pointer(0) == 0 {

@@ -3,6 +3,7 @@ pub enum Instruction {
     Move(i64), // move pointer to right
     Add {
         count: i64,
+        offset: i64,
     }, // add count to cell at offest from pointer
     Print(u64), // prints the current memory cell as ascii
     Read(),    // reads input to the current memory cell
@@ -12,11 +13,11 @@ pub enum Instruction {
     FindEmptyLeft(), // set pointer to the first empty cell to the left
     Reset(),   // reset current cell
     Copy {
-        offset: i32,
+        offset: i64,
         multiplier: i64,
     }, // copy the current cell value into offset
     CopyChunk {
-        offset: i32,
+        offset: i64,
         length: u32,
         multiplier: i64,
     },
@@ -96,10 +97,10 @@ mod tests {
             }
         );
         assert_eq!(
-            InstructionList::new(vec![Instruction::Add { count: 5 }]),
+            InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }]),
             InstructionList {
                 current_instruction: 0,
-                instructions: vec![Instruction::Add { count: 5 }]
+                instructions: vec![Instruction::Add { count: 5, offset: 0 }]
             }
         );
     }
@@ -107,24 +108,24 @@ mod tests {
     #[test]
     fn test_next_instruction() {
         let mut list = InstructionList::new(vec![
-            Instruction::Add { count: 5 },
-            Instruction::Add { count: 2 },
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Add { count: 2, offset: 0 },
         ]);
         assert_eq!(
             list.next_instruction(),
-            Some(&Instruction::Add { count: 5 })
+            Some(&Instruction::Add { count: 5, offset: 0 })
         );
         assert_eq!(
             list.next_instruction(),
-            Some(&Instruction::Add { count: 2 })
+            Some(&Instruction::Add { count: 2, offset: 0 })
         );
     }
 
     #[test]
     fn test_jump_to_right() {
         let mut list = InstructionList::new(vec![
-            Instruction::Add { count: 5 },
-            Instruction::Add { count: 2 },
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Add { count: 2, offset: 0 },
             Instruction::JumpToLeft(),
             Instruction::Print(1),
         ]);
@@ -136,8 +137,8 @@ mod tests {
     fn test_jump_to_left() {
         let mut list = InstructionList::new(vec![
             Instruction::JumpToRight(),
-            Instruction::Add { count: 5 },
-            Instruction::Add { count: 2 },
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Add { count: 2, offset: 0 },
             Instruction::Print(1),
         ]);
         list.next_instruction();

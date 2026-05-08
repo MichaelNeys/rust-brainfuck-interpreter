@@ -1,3 +1,4 @@
+
 #[derive(PartialEq, Debug)]
 pub struct MemoryTape {
     positive_data: Vec<u8>,
@@ -22,34 +23,38 @@ impl MemoryTape {
         }
     }
 
-    pub fn set_pointer(&mut self, pointer: i64) {
-        self.pointer = pointer
-    }
-    pub fn set_at_pointer(&mut self, value: u8, offset: i32) {
-        let offset_pointer = self.pointer + offset as i64;
+    fn get_mut_at_pointer(&mut self, offset: i64) -> &mut u8{
+        let offset_pointer = self.pointer + offset;
 
         if offset_pointer >= 0 {
             // positive list
             if offset_pointer as usize >= self.positive_data.len() {
                 self.positive_data.resize(offset_pointer as usize + 1, 0);
             }
-            self.positive_data[offset_pointer as usize] = value;
+            &mut self.positive_data[offset_pointer as usize]
         } else {
             let location: usize = (-offset_pointer as usize) - 1;
             // negative list
             if location >= self.negative_data.len() {
                 self.negative_data.resize(location + 1, 0);
             }
-            self.negative_data[location] = value
+            &mut self.negative_data[location]
         }
+    }
+
+    pub fn set_pointer(&mut self, pointer: i64) {
+        self.pointer = pointer
+    }
+    pub fn set_at_pointer(&mut self, value: u8, offset: i64) {
+        *self.get_mut_at_pointer(offset) = value;
     }
 
     pub fn move_pointer(&mut self, count: i64) {
         self.pointer += count;
     }
 
-    pub fn get_at_pointer(&self, offset: i32) -> u8 {
-        let offset_pointer = self.pointer + offset as i64;
+    pub fn get_at_pointer(&self, offset: i64) -> u8 {
+        let offset_pointer = self.pointer + offset;
 
         if offset_pointer >= 0 {
             // positive list
@@ -69,19 +74,16 @@ impl MemoryTape {
         }
     }
 
-    pub fn add_at_pointer(&mut self, count: i64, offset: i32) {
-        self.set_at_pointer(
-            self.get_at_pointer(offset).wrapping_add(count as u8),
-            offset,
-        );
+    pub fn add_at_pointer(&mut self, count: i64, offset: i64) {
+        let value = self.get_mut_at_pointer(offset);
+        *value = value.wrapping_add(count as u8);
     }
 
-    pub fn copy_chunk(&mut self, offset: i32, length: u32, multiplier: i64) {
-        // Possible optimisation: mut the list itself
-        for location in 0..length {
-            let to_add = self.get_at_pointer(location as i32);
-            self.add_at_pointer(to_add as i64 * multiplier, offset + location as i32);
-            self.set_at_pointer(0, location as i32);
+    pub fn copy_chunk(&mut self, offset: i64, length: u32, multiplier: i64) {
+        for location in 0..length as i64 {
+            let to_add = self.get_at_pointer(location as i64);
+            self.add_at_pointer(to_add as i64 * multiplier, offset + location as i64);
+            self.set_at_pointer(0, location as i64);
         }
     }
 }
@@ -141,8 +143,32 @@ mod tests {
         tape.set_at_pointer(1, 0);
         tape.set_at_pointer(2, 1);
         tape.set_at_pointer(3, 2);
+
+        // emulate a full copy pair, with move after
         tape.copy_chunk(3, 3, 1);
+        tape.move_pointer(2);
+
+        println!("{:?}", tape.positive_data);
         assert_eq!(tape.get_at_pointer(1), 1);
         assert_eq!(tape.get_at_pointer(2), 2);
+    }
+
+    #[test]
+    fn test_copy_chunk_over_data() {
+        let mut tape = MemoryTape::new();
+
+        tape.set_at_pointer(1, 0);
+        tape.set_at_pointer(2, 1);
+        tape.set_at_pointer(3, 2);
+        tape.set_at_pointer(4, 3);
+        tape.set_at_pointer(5, 4);
+
+        // emulate a full copy pair, with move after
+        tape.copy_chunk(3, 3, 1);
+        tape.move_pointer(2);
+
+        println!("{:?}", tape.positive_data);
+        assert_eq!(tape.get_at_pointer(1), 1+4);
+        assert_eq!(tape.get_at_pointer(2), 2+5);
     }
 }

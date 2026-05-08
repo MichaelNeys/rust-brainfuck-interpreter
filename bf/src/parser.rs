@@ -9,8 +9,8 @@ impl Parser {
 
         for char in chars {
             match char {
-                '+' => instructions.push(Instruction::Add { count: 1 }),
-                '-' => instructions.push(Instruction::Add { count: -1 }),
+                '+' => instructions.push(Instruction::Add { count: 1, offset: 0 }),
+                '-' => instructions.push(Instruction::Add { count: -1, offset: 0 }),
                 '>' => instructions.push(Instruction::Move(1)),
                 '<' => instructions.push(Instruction::Move(-1)),
                 '.' => instructions.push(Instruction::Print(1)),
@@ -26,9 +26,9 @@ impl Parser {
     fn collapse_add(instructions: &[Instruction]) -> Vec<Instruction> {
         instructions.iter().fold(vec![], |mut acc, new| {
             match acc.last_mut() {
-                Some(Instruction::Add { count: last_count }) => {
+                Some(Instruction::Add { count: last_count, offset: last_offset }) => {
                     match new {
-                        Instruction::Add { count } => {
+                        Instruction::Add { count, offset } if *offset == *last_offset => {
                             // merge
                             *last_count += count;
                         }
@@ -147,7 +147,7 @@ impl Parser {
                     let len = acc.len();
                     if len >= 2 {
                         match (acc[len - 2], acc[len - 1]) {
-                            (Instruction::JumpToRight(), Instruction::Add { count: -1 }) => {
+                            (Instruction::JumpToRight(), Instruction::Add { count: -1, offset: 0 }) => {
                                 acc.pop();
                                 acc.pop();
                                 acc.push(Instruction::Reset());
@@ -180,7 +180,7 @@ impl Parser {
         let mut loop_start: usize = 0;
         let mut move_count = 0;
         let mut source_dec = 0;
-        let mut copy_offsets: Vec<(i32, i64)> = vec![];
+        let mut copy_offsets: Vec<(i64, i64)> = vec![];
         let mut invalidated = false;
         let mut pushed = false;
 
@@ -201,11 +201,11 @@ impl Parser {
                 Instruction::Move(count) => {
                     move_count += count;
                 }
-                Instruction::Add { count } => {
+                Instruction::Add { count, offset: 0 } => {
                     if move_count == 0 {
                         source_dec += count;
                     } else {
-                        copy_offsets.push((move_count as i32, count));
+                        copy_offsets.push((move_count, count));
                     }
                 }
                 Instruction::JumpToLeft() => {
@@ -250,8 +250,8 @@ impl Parser {
 
     fn remove_redundant(instructions: &[Instruction]) -> Vec<Instruction> {
         instructions.iter().fold(vec![], |mut acc, new| match new {
-            Instruction::Add { count } if *count == 0 => acc,
-            Instruction::Move(count) if *count == 0 => acc,
+            Instruction::Add { count: 0, offset: _ } => acc,
+            Instruction::Move(0) => acc,
             Instruction::Copy {
                 offset: _,
                 multiplier,
