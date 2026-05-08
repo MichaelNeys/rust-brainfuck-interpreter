@@ -172,6 +172,56 @@ mod tests {
     }
 
     #[test]
+    fn test_jump_to_right_when_zero() {
+        let mut exec = create_executor(vec![
+            Instruction::JumpToRight(), 
+            Instruction::Add { count: 9, offset: 0 },
+            Instruction::JumpToLeft(),
+            Instruction::Add { count: 4, offset: 0 },
+        ], b"");
+
+        exec.execute_instruction();
+        // hier wordt die Add 9 geskipt want we jumpen omdat cell 0 0 is
+        assert_eq!(exec.memory.get_at_pointer(0), 0);
+        exec.execute_instruction();
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 4);
+    }
+
+    #[test]
+    fn test_jump_to_left_loops_when_not_zero() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 2, offset: 0 },
+            Instruction::JumpToRight(),
+            Instruction::Add { count: -1, offset: 0 },
+            Instruction::Move(1),
+            Instruction::Add { count: 1, offset: 0 },
+            Instruction::Move(-1),
+            Instruction::JumpToLeft(),
+        ], b"");
+
+        exec.execute_instruction(); // cell 0 = 2
+        exec.execute_instruction(); // niet jumpen want is nie nul
+        assert_eq!(exec.memory.get_at_pointer(0), 2);
+        exec.execute_instruction(); // decrement cell 0 naar 1
+        assert_eq!(exec.memory.get_at_pointer(0), 1);
+        exec.execute_instruction(); // opschuiven
+        exec.execute_instruction(); // increment cell 1 naar 1
+        assert_eq!(exec.memory.get_at_pointer(0), 1);
+        exec.execute_instruction(); // terug opschuiven
+        exec.execute_instruction(); // jumpen links want cell 0 is nie 0
+        exec.execute_instruction(); // decrement cell 0 naar 0
+        assert_eq!(exec.memory.get_at_pointer(0), 0);
+        exec.execute_instruction(); // opschuiven
+        exec.execute_instruction(); // increment cell 1 naar 2
+        assert_eq!(exec.memory.get_at_pointer(0), 2);
+        exec.execute_instruction(); // terug opschuiven
+        exec.execute_instruction(); // niet jumpen want cell 0 is 0
+        assert_eq!(exec.memory.get_at_pointer(0), 0);
+        assert_eq!(exec.memory.get_at_pointer(1), 2); // cell 1 is nu wel 2 en die staart 1 move naar rechts van de huidige
+    }
+
+    #[test]
     fn test_reset_instruction() {
         let mut exec = create_executor(vec![
             Instruction::Add { count: 42, offset: 0 },
