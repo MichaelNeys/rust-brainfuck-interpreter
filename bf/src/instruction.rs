@@ -27,9 +27,9 @@ pub enum Instruction {
 
 #[derive(Debug, PartialEq)]
 pub struct InstructionList {
-    pub current_instruction: usize,
-    pub instructions: Vec<Instruction>,
-    pub jump_table: HashMap<usize, usize>,
+    current_instruction: usize,
+    instructions: Vec<Instruction>,
+    jump_table: HashMap<usize, usize>,
 }
 
 fn build_jump_table(instructions: &[Instruction]) -> HashMap<usize, usize> {
