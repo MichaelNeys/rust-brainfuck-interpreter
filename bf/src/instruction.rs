@@ -44,6 +44,7 @@ fn build_jump_table(instructions: &[Instruction]) -> HashMap<usize, usize> {
                 let open_index = open_stack
                     .pop()
                     .expect("Unbalanced brackets: could not find '['");
+
                 jump_table.entry(open_index).insert_entry(current);
                 jump_table.entry(current).insert_entry(open_index);
             }
@@ -80,7 +81,13 @@ impl InstructionList {
             .jump_table
             .get(&pointer)
             .expect("Fatal error: location of jump right instruction not found");
-        self.current_instruction = *destination;
+        if *destination + 1 < self.instructions.len(){
+            // if possible skip the bracket itself
+            self.current_instruction = *destination + 1;
+        }else{
+            self.current_instruction = *destination;
+        }
+
     }
 
     pub fn execute_jump_to_left(&mut self) {
@@ -89,7 +96,12 @@ impl InstructionList {
             .jump_table
             .get(&pointer)
             .expect("Fatal error: location of jump left instruction not found");
-        self.current_instruction = *destination;
+        if *destination + 1 < self.instructions.len(){
+            // if possible skip the bracket itself
+            self.current_instruction = *destination + 1;
+        }else{
+            self.current_instruction = *destination;
+        }
     }
 
     pub fn is_at_end(&self) -> bool {
@@ -175,7 +187,7 @@ mod tests {
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_right();
-        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
+        assert_eq!(list.next_instruction(), Some(&Instruction::Print(1)))
     }
 
     #[test]
@@ -197,6 +209,6 @@ mod tests {
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();
-        assert_eq!(list.next_instruction(), Some(&Instruction::JumpToRight()))
+        assert_eq!(list.next_instruction(), Some(&Instruction::Add{count: 5, offset: 0}));
     }
 }

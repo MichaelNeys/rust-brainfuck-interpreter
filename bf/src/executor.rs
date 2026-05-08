@@ -184,7 +184,6 @@ mod tests {
         // hier wordt die Add 9 geskipt want we jumpen omdat cell 0 0 is
         assert_eq!(exec.memory.get_at_pointer(0), 0);
         exec.execute_instruction();
-        exec.execute_instruction();
         assert_eq!(exec.memory.get_at_pointer(0), 4);
     }
 

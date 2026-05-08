@@ -1,4 +1,4 @@
-use crate::instruction::{Instruction, InstructionList};
+use crate::instruction::{Instruction};
 
 pub struct Parser;
 
