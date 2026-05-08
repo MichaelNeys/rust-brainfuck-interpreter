@@ -91,3 +91,198 @@ impl<R: Read> Executor<R> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::executor::Executor;
+    use crate::instruction::{Instruction, InstructionList};
+    
+
+    fn create_instruction_list(instructions: Vec<Instruction>) -> InstructionList {
+        InstructionList::new(instructions) 
+    }
+
+    fn create_executor(instructions: Vec<Instruction>, input: &[u8]) -> Executor<&[u8]> {
+        let list = create_instruction_list(instructions);
+        Executor::new(list, input)
+    }
+
+    #[test]
+    fn test_initialization() {
+        let exec = create_executor(vec![], b"");
+        assert_eq!(exec.memory.get_at_pointer(0), 0);
+    }
+
+    #[test]
+    fn test_add_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 5, offset: 0 },
+        ], b"");
+        
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 5);
+    }
+
+    #[test]
+    fn test_add_offset_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 5, offset: 2 },
+        ], b"");
+        
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(2), 5);
+    }
+
+    #[test]
+    fn test_move_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Move(1),
+            Instruction::Add { count: 10, offset: 0 },
+            Instruction::Move(-1)
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 10);
+        
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 0);
+    }
+
+    #[test]
+    fn test_read_instruction() {
+        let mut exec = create_executor(vec![Instruction::Read()], b"A");
+        
+        exec.execute_instruction();
+        
+        assert_eq!(exec.memory.get_at_pointer(0), 65); // ASCII waarde van A
+    }
+
+    #[test]
+    fn test_read_instruction_eof() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 10, offset: 0 },
+            Instruction::Read()
+        ], b"");
+        
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 10);
+        
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 0); //EOF zet cell naar 0
+    }
+
+    #[test]
+    fn test_reset_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 42, offset: 0 },
+            Instruction::Reset()
+        ], b"");
+
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 42);
+
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 0); // Reset zet cell naar 0
+    }
+
+    #[test]
+    fn test_find_empty_right() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 1, offset: 0 },
+            Instruction::Move(1),
+            Instruction::Add { count: 2, offset: 0 },
+            Instruction::Move(-1),
+            Instruction::FindEmptyRight(),
+            Instruction::Move(-1)
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        
+        exec.execute_instruction(); // FindEmptyRight
+        
+        assert_eq!(exec.memory.get_at_pointer(0), 0); // zou nu op de eerste lege cell moete staan
+
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 2); // 1 naar links zou dan 2 moeten bevatten
+    }
+
+    #[test]
+    fn test_find_empty_left() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 3, offset: 0 },
+            Instruction::Move(1),
+            Instruction::Add { count: 2, offset: 0 },
+            Instruction::Move(-1),
+            Instruction::FindEmptyLeft(),
+            Instruction::Move(1)
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        
+        exec.execute_instruction(); // FindEmptyLeft
+        
+        assert_eq!(exec.memory.get_at_pointer(0), 0); // zou nu op de eerste lege cell moete staan
+
+        exec.execute_instruction();
+        assert_eq!(exec.memory.get_at_pointer(0), 3); // 1 naar rechts zou dan 3 moeten bevatten
+    }
+
+    #[test]
+    fn test_copy_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Copy { offset: 2, multiplier: 3 }
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        
+        assert_eq!(exec.memory.get_at_pointer(0), 5);
+        assert_eq!(exec.memory.get_at_pointer(2), 15);
+    }
+
+    #[test]
+    fn test_copy_chunk_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Add { count: 6, offset: 1 },
+            Instruction::Add { count: 7, offset: 2 },
+            Instruction::CopyChunk { offset: (10), length: (3), multiplier: (1) }
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        
+        assert_eq!(exec.memory.get_at_pointer(10), 5);
+        assert_eq!(exec.memory.get_at_pointer(11), 6);
+        assert_eq!(exec.memory.get_at_pointer(12), 7);
+    }
+
+    #[test]
+    fn test_copy_chunk_multiplier_instruction() {
+        let mut exec = create_executor(vec![
+            Instruction::Add { count: 5, offset: 0 },
+            Instruction::Add { count: 6, offset: 1 },
+            Instruction::Add { count: 7, offset: 2 },
+            Instruction::CopyChunk { offset: (5), length: (3), multiplier: (2) }
+        ], b"");
+
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        exec.execute_instruction();
+        
+        assert_eq!(exec.memory.get_at_pointer(5), 10);
+        assert_eq!(exec.memory.get_at_pointer(6), 12);
+        assert_eq!(exec.memory.get_at_pointer(7), 14);
+    }
+}
