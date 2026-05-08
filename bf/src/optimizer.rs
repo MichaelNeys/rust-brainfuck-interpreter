@@ -200,7 +200,7 @@ impl Optimizer {
     fn de_loop_copy(instructions: &[Instruction]) -> Vec<Instruction> {
         let mut in_loop = false;
         let mut loop_start: usize = 0;
-        let mut move_count = 0;
+        let mut total_moves = 0;
         let mut source_dec = 0;
         let mut copy_offsets: Vec<(i64, i64)> = vec![];
         let mut invalidated = false;
@@ -215,24 +215,24 @@ impl Optimizer {
                 Instruction::JumpToRight() => {
                     in_loop = true;
                     loop_start = result.len(); // starting instruction has not been added yet
-                    move_count = 0;
+                    total_moves = 0;
                     invalidated = false;
                     copy_offsets = vec![];
                     source_dec = 0;
                 }
                 Instruction::Move(count) => {
-                    move_count += count;
+                    total_moves += count;
                 }
                 Instruction::Add { count, offset: 0 } => {
-                    if move_count == 0 {
+                    if total_moves == 0 {
                         source_dec += count;
                     } else {
-                        copy_offsets.push((move_count, count));
+                        copy_offsets.push((total_moves, count));
                     }
                 }
                 Instruction::JumpToLeft() => {
                     if in_loop
-                        && move_count == 0
+                        && total_moves == 0
                         && !copy_offsets.is_empty()
                         && !invalidated
                         && source_dec == -1
@@ -250,7 +250,7 @@ impl Optimizer {
                     }
 
                     in_loop = false;
-                    move_count = 0;
+                    total_moves = 0;
                     invalidated = false;
                     copy_offsets = vec![];
                     source_dec = 0;
@@ -292,10 +292,10 @@ impl Optimizer {
         let mut instructions = instructions;
 
 
-        let mut old_len = instructions.len() + 1;
+        let mut old_list = vec![];
 
-        while old_len > instructions.len() {
-            old_len = instructions.len();
+        while old_list != instructions {
+            old_list = instructions.clone();
             instructions = Self::collapse_add(&instructions);
             instructions = Self::collapse_move(&instructions);
             instructions = Self::collapse_print(&instructions);
