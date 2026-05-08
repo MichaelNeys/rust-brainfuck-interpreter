@@ -2,8 +2,8 @@
 
 | Naam   | Voornaam | Studentnummer |
 | :----- | :------- | ------------: |
-| Lehaen | Joost| 2468995 |
-| Neys   | Michael | 2467626 |
+| Lehaen | Joost    | 2468995       |
+| Neys   | Michael  | 2467626       |
 
 # Programa overview
 Het hele programma werkt in 4 fases
@@ -20,11 +20,11 @@ De parse fase is zeer kort en parsed alles letterlijk per instructie naar Instru
 De optimalisatie fase krijgt een lijst van instructies en past een aantal optimalisaties toe. 
 De optimalisaties worden in een bepaalde volgorde toegepast zodat ze voorbereidend werk kunnen doen voor de volgende en elkaar niet in de weg zitten. Bv. Eerst moves en adds mergen voordat we gaan delopen
 We doen dit in een loop die stopt vanaf het moment dat de optimalisaties geen effect meer hebben gehad op de lijst van instructies.
-Als laatste wordt dit in een InstructionList object gezet. Als dit object aangemaakt word, word ook automatisch een jump table gegenereert voor '\[' en '\]' instructies
+Als laatste wordt dit in een InstructionList object gezet. Als dit object aangemaakt wordt, wordt ook automatisch een jump table gegenereerd voor '\[' en '\]' instructies.
 
 ## 4. Het uitvoeren van het brainfuck programma
 Na het parsen en optimaliseren van het brainfuck programma is uitvoeren straight forward. De executor gebruikt een InstructionList en MemoryTape om de instructies op uit te voeren. 
-Op beide datastructuren zijn equivalente functies geimplementeerd als de Instruction enumerators. 
+Op beide datastructuren zijn equivalente functies geïmplementeerd als de Instruction enumerators. 
 Sommige instructies gebruiken combinaties van functies om hun doel te bereiken bv. `JumpToRight`.
 
 ## MemoryTape
@@ -37,15 +37,15 @@ Intern worden de pointers vertaald naar hun juiste array en index combinatie.
 ## Verplicht
 
 ### Deduplicatie
-We hebben volledige heterogene deduplicatie geimplementeerd inclusief het verwijderen van instructies die geen effect zullen hebben op het uiteindelijke resultaat.
+We hebben volledige heterogene deduplicatie geïmplementeerd inclusief het verwijderen van instructies die geen effect zullen hebben op het uiteindelijke resultaat.
 We hebben dit toegepast op de verplichte Move en Add instructies.
 De optimizer gebruikt voor beide instructies een fold op de instructions slice. Hierbij worden 2 dezelfde instructies hun count opgeteld bij elkaar.
 Bij Add wordt dit enkel gedaan als de offset gelijk is.
 
 ### Ontlussing
-Alle verplichte vormen van ontlussing zijn geimplementeerd: zoeklus, resetlus en alle vormen van kopieerlussen.
+Alle verplichte vormen van ontlussing zijn geïmplementeerd: zoeklus, resetlus en alle vormen van kopieerlussen.
 
-Bij het onlussen van zoeklussen en resetlussen wordt in een fold letterlijk gematched op 3 opeenvolgende instructies.
+Bij het ontlussen van zoeklussen en resetlussen wordt in een fold letterlijk gematched op 3 opeenvolgende instructies.
 Als die instructies overeenkomen met een zoeklus of resetlus worden die instructies vervangen door 1 Instructie enumerator.
 
 Bij het ontlussen van Kopieerlussen gaat het iets ingewikkelder. We overlopen elke instructie 1 voor 1. 
@@ -53,7 +53,7 @@ Als we een `JumpToRight` instructie tegenkomen zien we dit als een entrypoint na
 Dan beginnen we met tellen tot we een `JumpToLeft` tegenkomen. We tellen de volgende dingen.
 * de totale verplaatsing
 * hoeveel de begin cell veranderd wordt
-We houden ook een lijst bij van alle posities waar naar gecopieerd moet worden (Dit is bij elke set van + of - die geen totale verplaatsing van 0 hebben)
+We houden ook een lijst bij van alle posities waar naar gekopieerd moet worden (Dit is bij elke set van + of - die geen totale verplaatsing van 0 hebben)
 
 Als we op het einde een totale verplaatsing van 0 hebben en de begin cell met -1 is veranderd dan vervangen we alle instructies die we tegen zijn gekomen met een `Copy` instructie met de juiste parameters.
 We voegen daarna ook nog een Reset toe om de huidige cell te resetten.
@@ -62,7 +62,7 @@ We voegen daarna ook nog een Reset toe om de huidige cell te resetten.
 We hebben ook nog een aantal kleinere optimalisaties toegepast die niet verplicht waren
 
 ### ChunkCopies
-We hebben gemerkt dat een veel voorkomend patroon in brainfuck het volgende is: Copier een cel met een offset, verplaats 1 en copieer nog eens met dezelfde offset etc.
+We hebben gemerkt dat een veel voorkomend patroon in brainfuck het volgende is: Kopieer een cel met een offset, verplaats 1 en kopieer nog eens met dezelfde offset etc.
 We hebben dit geoptimaliseerd naar een `ChunkCopy` dat all deze instructies in 1 keer uitvoert. 
 Achterliggend gebruikt het nog wel dezelfde logica en functies die normaal zouden aangeroepen worden.
 Dit komt doordat elke copy technisch gezien veranderd kan worden door de vorige copy.
