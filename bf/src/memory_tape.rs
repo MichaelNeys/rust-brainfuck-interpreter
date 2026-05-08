@@ -1,4 +1,3 @@
-
 #[derive(PartialEq, Debug)]
 pub struct MemoryTape {
     positive_data: Vec<u8>,
@@ -7,8 +6,7 @@ pub struct MemoryTape {
     pointer: i64,
 }
 
-
-impl Default for MemoryTape{
+impl Default for MemoryTape {
     fn default() -> Self {
         MemoryTape::new()
     }
@@ -23,7 +21,7 @@ impl MemoryTape {
         }
     }
 
-    fn get_mut_at_pointer(&mut self, offset: i64) -> &mut u8{
+    fn get_mut_at_pointer(&mut self, offset: i64) -> &mut u8 {
         let offset_pointer = self.pointer + offset;
 
         if offset_pointer >= 0 {
@@ -81,9 +79,9 @@ impl MemoryTape {
 
     pub fn copy_chunk(&mut self, offset: i64, length: u32, multiplier: i64) {
         for location in 0..length as i64 {
-            let to_add = self.get_at_pointer(location as i64);
-            self.add_at_pointer(to_add as i64 * multiplier, offset + location as i64);
-            self.set_at_pointer(0, location as i64);
+            let to_add = self.get_at_pointer(location);
+            self.add_at_pointer(to_add as i64 * multiplier, offset + location);
+            self.set_at_pointer(0, location);
         }
     }
 }
@@ -168,7 +166,7 @@ mod tests {
         tape.move_pointer(2);
 
         println!("{:?}", tape.positive_data);
-        assert_eq!(tape.get_at_pointer(1), 1+4);
-        assert_eq!(tape.get_at_pointer(2), 2+5);
+        assert_eq!(tape.get_at_pointer(1), 1 + 4);
+        assert_eq!(tape.get_at_pointer(2), 2 + 5);
     }
 }

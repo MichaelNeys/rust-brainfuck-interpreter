@@ -9,8 +9,14 @@ impl Parser {
 
         for char in chars {
             match char {
-                '+' => instructions.push(Instruction::Add { count: 1, offset: 0 }),
-                '-' => instructions.push(Instruction::Add { count: -1, offset: 0 }),
+                '+' => instructions.push(Instruction::Add {
+                    count: 1,
+                    offset: 0,
+                }),
+                '-' => instructions.push(Instruction::Add {
+                    count: -1,
+                    offset: 0,
+                }),
                 '>' => instructions.push(Instruction::Move(1)),
                 '<' => instructions.push(Instruction::Move(-1)),
                 '.' => instructions.push(Instruction::Print(1)),
@@ -26,7 +32,10 @@ impl Parser {
     fn collapse_add(instructions: &[Instruction]) -> Vec<Instruction> {
         instructions.iter().fold(vec![], |mut acc, new| {
             match acc.last_mut() {
-                Some(Instruction::Add { count: last_count, offset: last_offset }) => {
+                Some(Instruction::Add {
+                    count: last_count,
+                    offset: last_offset,
+                }) => {
                     match new {
                         Instruction::Add { count, offset } if *offset == *last_offset => {
                             // merge
@@ -123,6 +132,37 @@ impl Parser {
         result
     }
 
+    fn collapse_move_add_move(instructions: &[Instruction]) -> Vec<Instruction> {
+        let mut i = 0;
+        let mut result: Vec<Instruction> = vec![];
+
+        while i < instructions.len() {
+            if let Instruction::Move(first_count) = instructions[i]
+                && i + 2 < instructions.len()
+            {
+                match (instructions[i + 1], instructions[i + 2]) {
+                    (Instruction::Add { count, offset }, Instruction::Move(second_count))
+                        if first_count == -second_count =>
+                    {
+                        // we can just use offset instead of moving twice
+                        result.push(Instruction::Add {
+                            count,
+                            offset: offset + first_count,
+                        });
+                        // go to the next insruction
+                        i += 3;
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+
+            result.push(instructions[i]);
+            i += 1;
+        }
+        result
+    }
+
     fn collapse_find_empty(instructions: &[Instruction]) -> Vec<Instruction> {
         instructions.iter().fold(vec![], |mut acc, new| {
             match new {
@@ -147,7 +187,13 @@ impl Parser {
                     let len = acc.len();
                     if len >= 2 {
                         match (acc[len - 2], acc[len - 1]) {
-                            (Instruction::JumpToRight(), Instruction::Add { count: -1, offset: 0 }) => {
+                            (
+                                Instruction::JumpToRight(),
+                                Instruction::Add {
+                                    count: -1,
+                                    offset: 0,
+                                },
+                            ) => {
                                 acc.pop();
                                 acc.pop();
                                 acc.push(Instruction::Reset());
@@ -250,7 +296,10 @@ impl Parser {
 
     fn remove_redundant(instructions: &[Instruction]) -> Vec<Instruction> {
         instructions.iter().fold(vec![], |mut acc, new| match new {
-            Instruction::Add { count: 0, offset: _ } => acc,
+            Instruction::Add {
+                count: 0,
+                offset: _,
+            } => acc,
             Instruction::Move(0) => acc,
             Instruction::Copy {
                 offset: _,
@@ -278,6 +327,7 @@ impl Parser {
             instructions = Self::de_loop_copy(&instructions);
             instructions = Self::remove_redundant(&instructions);
             instructions = Self::collapse_chunk_copy(&instructions);
+            instructions = Self::collapse_move_add_move(&instructions);
         }
 
         InstructionList::new(instructions)
