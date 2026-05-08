@@ -1,4 +1,3 @@
-use crate::instruction::Instruction::CopyChunk;
 use crate::instruction::{Instruction, InstructionList};
 
 pub struct Parser;
@@ -31,7 +30,7 @@ impl Parser {
                     match new {
                         Instruction::Add { count } => {
                             // merge
-                            *last_count = *last_count + count;
+                            *last_count += count;
                         }
                         _ => acc.push(*new),
                     }
@@ -48,7 +47,7 @@ impl Parser {
             match acc.last_mut() {
                 Some(Instruction::Move(last_count)) => match new {
                     Instruction::Move(count) => {
-                        *last_count = *last_count + count;
+                        *last_count += count;
                     }
                     _ => acc.push(*new),
                 },
@@ -64,7 +63,7 @@ impl Parser {
             match acc.last_mut() {
                 Some(Instruction::Print(last_count)) => match new {
                     Instruction::Print(count) => {
-                        *last_count = *last_count + count;
+                        *last_count += count;
                     }
                     _ => acc.push(*new),
                 },
@@ -212,7 +211,7 @@ impl Parser {
                 Instruction::JumpToLeft() => {
                     if in_loop
                         && move_count == 0
-                        && copy_offsets.len() > 0
+                        && !copy_offsets.is_empty()
                         && !invalidated
                         && source_dec == -1
                     {

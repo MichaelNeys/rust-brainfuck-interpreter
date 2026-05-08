@@ -32,7 +32,7 @@ impl InstructionList {
     pub fn new(instructions: Vec<Instruction>) -> InstructionList {
         InstructionList {
             current_instruction: 0,
-            instructions: instructions,
+            instructions,
         }
     }
 

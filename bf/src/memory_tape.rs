@@ -6,6 +6,13 @@ pub struct MemoryTape {
     pointer: i64,
 }
 
+
+impl Default for MemoryTape{
+    fn default() -> Self {
+        MemoryTape::new()
+    }
+}
+
 impl MemoryTape {
     pub fn new() -> MemoryTape {
         MemoryTape {
