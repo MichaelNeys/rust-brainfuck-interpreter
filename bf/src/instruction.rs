@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Instruction {
     Move(i64), // move pointer to right
@@ -25,15 +27,44 @@ pub enum Instruction {
 
 #[derive(Debug, PartialEq)]
 pub struct InstructionList {
-    pub current_instruction: usize,
-    pub instructions: Vec<Instruction>,
+    current_instruction: usize,
+    instructions: Vec<Instruction>,
+    jump_table: HashMap<usize, usize>,
+}
+
+fn build_jump_table(instructions: &[Instruction]) -> HashMap<usize, usize> {
+    let mut jump_table: HashMap<usize, usize> = HashMap::new();
+
+    let mut open_stack: Vec<usize> = vec![];
+
+    for (current, instruction) in instructions.iter().enumerate() {
+        match instruction {
+            Instruction::JumpToRight() => open_stack.push(current),
+            Instruction::JumpToLeft() => {
+                let open_index = open_stack
+                    .pop()
+                    .expect("Unbalanced brackets: could not find '['");
+                jump_table.entry(open_index).insert_entry(current);
+                jump_table.entry(current).insert_entry(open_index);
+            }
+            _ => {}
+        }
+    }
+
+    if !open_stack.is_empty() {
+        panic!("Unbalanced brackets: could not find ']'");
+    }
+
+    jump_table
 }
 
 impl InstructionList {
     pub fn new(instructions: Vec<Instruction>) -> InstructionList {
+        let jump_table: HashMap<usize, usize> = build_jump_table(&instructions);
         InstructionList {
             current_instruction: 0,
             instructions,
+            jump_table,
         }
     }
 
@@ -44,38 +75,21 @@ impl InstructionList {
     }
 
     pub fn execute_jump_to_right(&mut self) {
-        let mut depth = 1;
-        while depth > 0 {
-            if self.current_instruction >= self.instructions.len() {
-                panic!("Unbalanced brackets: could not find ']'");
-            }
-            match self.instructions[self.current_instruction] {
-                Instruction::JumpToRight() => depth += 1,
-                Instruction::JumpToLeft() => depth -= 1,
-                _ => {}
-            }
-            if depth > 0 {
-                self.current_instruction += 1;
-            }
-        }
+        let pointer = self.current_instruction - 1;
+        let destination = self
+            .jump_table
+            .get(&pointer)
+            .expect("Fatal error: location of jump right instruction not found");
+        self.current_instruction = *destination;
     }
 
     pub fn execute_jump_to_left(&mut self) {
-        self.current_instruction -= 2;
-        let mut depth = 1;
-        while depth > 0 {
-            match self.instructions[self.current_instruction] {
-                Instruction::JumpToLeft() => depth += 1,
-                Instruction::JumpToRight() => depth -= 1,
-                _ => {}
-            }
-            if depth > 0 {
-                if self.current_instruction == 0 {
-                    panic!("Unbalanced brackets: could not find '['");
-                }
-                self.current_instruction -= 1;
-            }
-        }
+        let pointer = self.current_instruction - 1;
+        let destination = self
+            .jump_table
+            .get(&pointer)
+            .expect("Fatal error: location of jump left instruction not found");
+        self.current_instruction = *destination;
     }
 
     pub fn is_at_end(&self) -> bool {
@@ -86,6 +100,7 @@ impl InstructionList {
 #[cfg(test)]
 mod tests {
     use crate::instruction::{Instruction, InstructionList};
+    use std::collections::HashMap;
 
     #[test]
     fn test_new() {
@@ -93,14 +108,22 @@ mod tests {
             InstructionList::new(vec![]),
             InstructionList {
                 current_instruction: 0,
-                instructions: vec![]
+                instructions: vec![],
+                jump_table: HashMap::from([])
             }
         );
         assert_eq!(
-            InstructionList::new(vec![Instruction::Add { count: 5, offset: 0 }]),
+            InstructionList::new(vec![Instruction::Add {
+                count: 5,
+                offset: 0
+            }]),
             InstructionList {
                 current_instruction: 0,
-                instructions: vec![Instruction::Add { count: 5, offset: 0 }]
+                instructions: vec![Instruction::Add {
+                    count: 5,
+                    offset: 0
+                }],
+                jump_table: HashMap::from([])
             }
         );
     }
@@ -108,27 +131,49 @@ mod tests {
     #[test]
     fn test_next_instruction() {
         let mut list = InstructionList::new(vec![
-            Instruction::Add { count: 5, offset: 0 },
-            Instruction::Add { count: 2, offset: 0 },
+            Instruction::Add {
+                count: 5,
+                offset: 0,
+            },
+            Instruction::Add {
+                count: 2,
+                offset: 0,
+            },
         ]);
         assert_eq!(
             list.next_instruction(),
-            Some(&Instruction::Add { count: 5, offset: 0 })
+            Some(&Instruction::Add {
+                count: 5,
+                offset: 0
+            })
         );
         assert_eq!(
             list.next_instruction(),
-            Some(&Instruction::Add { count: 2, offset: 0 })
+            Some(&Instruction::Add {
+                count: 2,
+                offset: 0
+            })
         );
     }
 
     #[test]
     fn test_jump_to_right() {
         let mut list = InstructionList::new(vec![
-            Instruction::Add { count: 5, offset: 0 },
-            Instruction::Add { count: 2, offset: 0 },
+            Instruction::Add {
+                count: 5,
+                offset: 0,
+            },
+            Instruction::Add {
+                count: 2,
+                offset: 0,
+            },
+            Instruction::JumpToRight(),
             Instruction::JumpToLeft(),
             Instruction::Print(1),
         ]);
+        list.next_instruction();
+        list.next_instruction();
+        list.next_instruction();
         list.execute_jump_to_right();
         assert_eq!(list.next_instruction(), Some(&Instruction::JumpToLeft()))
     }
@@ -137,10 +182,18 @@ mod tests {
     fn test_jump_to_left() {
         let mut list = InstructionList::new(vec![
             Instruction::JumpToRight(),
-            Instruction::Add { count: 5, offset: 0 },
-            Instruction::Add { count: 2, offset: 0 },
+            Instruction::Add {
+                count: 5,
+                offset: 0,
+            },
+            Instruction::JumpToLeft(),
+            Instruction::Add {
+                count: 2,
+                offset: 0,
+            },
             Instruction::Print(1),
         ]);
+        list.next_instruction();
         list.next_instruction();
         list.next_instruction();
         list.execute_jump_to_left();
